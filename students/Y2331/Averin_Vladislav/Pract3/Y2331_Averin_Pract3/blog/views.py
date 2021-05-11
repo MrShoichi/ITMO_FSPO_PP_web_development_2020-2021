@@ -1,9 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import *
 from django.http import Http404
 from django.views.generic import DetailView, UpdateView, CreateView, DeleteView
 from django.views.generic.list import ListView
 from .forms import *
 from blog.models import *
+from django.contrib.auth import update_session_auth_hash
+from django.template import RequestContext
 
 
 def detail(request, id):
@@ -47,22 +49,6 @@ class CarDetail(DetailView):
     template_name = 'Owner/CarDetail.html'
 
 
-def create_car_owner(request):
-    # dictionary for initial data with
-    # field names as keys
-    context = {}
-
-    # add the dictionary during initialization
-    form = CarOwnerForm(
-        request.POST or None)  # создание экземпляра формы, передача в него данных из формы (из полей в браузере)
-    if form.is_valid():  # проверка формы на корректность (валидация)
-        form.save()
-
-    context['form'] = form
-
-    return render(request, "Owner/create_car_owner.html", context)
-
-
 class CarUpdate(UpdateView):
     model = Car
     fields = ['state_number', 'mark', 'model', 'color']
@@ -82,3 +68,20 @@ class CarDelete(DeleteView):
     model = Car
     template_name = 'Owner/delete_car.html'
     success_url = '/CarList/'
+
+
+def register_student(request):
+    context = {}
+    if request.method == 'POST':
+        car_owner_form = CarOwnerForm(data=request.POST)
+
+        if car_owner_form.is_valid():
+            car_owner = car_owner_form.save()
+            car_owner.set_password(car_owner.password)
+            car_owner.save()
+
+    else:
+        car_owner_form = CarOwnerForm()
+    context['form'] = car_owner_form
+    return render(request, 'Owner/create_car_owner.html', context)
+
